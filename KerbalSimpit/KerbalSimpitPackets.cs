@@ -72,6 +72,7 @@ namespace KerbalSimpit
         public static byte TempLimit = 42;
         public static byte AdvancedActionGroups = 56;
         public static byte AdvancedCustomActionGroups = 57;
+        public static byte ScienceValue = 61;
 
         // External Environment
         public static byte TargetInfo = 25;
@@ -169,7 +170,16 @@ namespace KerbalSimpit
         public const byte advancedAbortAction = 6;
         public const byte advancedSolarAction = 7;
         public const byte advancedRadiatorAction = 8;
+        public const byte advancedScienceAction = 9;
     };
+
+    public static class AdvancedActionGroupStates
+    {
+        public const byte notAvailable = 0;
+        public const byte active = 1;
+        public const byte inactive = 2;
+        public const byte mixed = 3;
+    }
 
     public static class ActionGroupSettings
     {

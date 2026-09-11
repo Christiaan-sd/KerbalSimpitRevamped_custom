@@ -26,4 +26,35 @@ Don't forget to update your port name in the `KerbalSimpit\Settings.cfg` file ! 
 
 To install the Arduino lib, you can go to the `KerbalSimpit` folder installed previously and copy the `KerbalSimpitRevamped-Arduino` into your Arduino library folder (usually under `Documents\Arduino\libraries`). Then you can open your Arduino IDE and you should find some Simpit examples in the example list. It should be included in the Arduino library manager shortly.
 
+## Controller support for solar panels, radiators and science
 
+This KSP 1 fork extends the standard action-group protocol with the advanced
+action-group channels already provided by the Simpit Arduino library:
+
+- Subscribe to outbound channel `56` (`AdvancedActionGroups`) to receive a
+  32-bit status value. Each action uses two bits: `0` not available, `1`
+  active, `2` inactive and `3` mixed. Solar panels are index `7` and
+  radiators index `8`. Science uses index `9` as an extension; send this
+  numeric value if your installed Arduino library does not define
+  `ADVANCED_SCIENCE_ACTION` yet.
+- Send one byte to inbound channel `58` (`SetSingleActionGroup`) to control an
+  action. Encode it as `(index << 2) | setting`, where setting is `1` activate,
+  `2` deactivate/reset or `3` toggle. Solar and radiator commands operate on
+  every matching module on the active vessel; radiator activate/deactivate also
+  extend/retract them. Science activate/toggle deploys all science experiments
+  that can run, while deactivate resets experiments where KSP permits it.
+
+The science status and channel `61` (`ScienceValue`) use the active
+`ScienceSubject` and stored `ScienceData` state. Experiments whose data is
+already on the experiment or in a `ModuleScienceContainer` are not counted
+again, so the controller only reports science that is still available at the
+current situation and biome. The value is a 32-bit float and the controller
+blinks only when more than 10 science points are available.
+
+After science is executed, newly generated `ScienceData` is automatically moved
+through one KSP 1 `CollectAllEvent` call five seconds after the controller
+button is pressed. The provider compares the review/potential value before and
+after that collection and suppresses the alarm until a higher value is found
+in a new science context. If no container exists, the data remains on the
+experiment. The three-second science-button action still resets resettable
+experiments.

@@ -95,6 +95,7 @@
     <Compile Include="KerbalSimpit\Localisation_Libs\Command_Lib_Local.cs" />
     <Compile Include="KerbalSimpit\Providers\ActionGroups.cs" />
     <Compile Include="KerbalSimpit\Providers\Actions.cs" />
+    <Compile Include="KerbalSimpit\Providers\AdvancedActions.cs" />
     <Compile Include="KerbalSimpit\Providers\AxisControl.cs" />
     <Compile Include="KerbalSimpit\Providers\CameraControl.cs" />
     <Compile Include="KerbalSimpit\Providers\FlightProviders.cs" />
