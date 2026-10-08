@@ -57,6 +57,10 @@ collection, solar-to-antenna coupling, status update interval, refresh rate
 and verbose logging. Threshold and blink settings are sent to the controller
 over channels `62` and `63`.
 
+Channel `64` (`DynamicPressure`) reports the active vessel's atmospheric
+dynamic pressure in kilopascals, calculated as one half of atmospheric density
+times surface speed squared. It is zero outside an atmosphere.
+
 After science is executed, newly generated `ScienceData` is automatically moved
 through one KSP 1 `CollectAllEvent` call five seconds after the controller
 button is pressed. The provider compares the review/potential value before and

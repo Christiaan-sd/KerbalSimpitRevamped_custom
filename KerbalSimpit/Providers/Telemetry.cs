@@ -29,6 +29,13 @@ namespace KerbalSimpit.Providers
             public int apoapsis;
         }
 
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        [Serializable]
+        public struct DynamicPressureStruct
+        {
+            public float kiloPascals;
+        }
+
         [StructLayout(LayoutKind.Sequential, Pack=1)][Serializable]
         public struct VelocityStruct
         {
@@ -124,10 +131,12 @@ namespace KerbalSimpit.Providers
         private BurnTimeStruct myBurnTimeStruct;
         private OrbitInfoStruct myOrbitInfoStruct;
         private TempLimitStruct myTempLimitStruct;
+        private DynamicPressureStruct myDynamicPressure;
 
         private EventData<byte, object> altitudeChannel, apsidesChannel,
             apsidesTimeChannel, ortbitInfoChannel, velocityChannel, airspeedChannel,
             maneuverChannel, rotationChannel, deltaVChannel, deltaVEnvChannel, burnTimeChannel, tempLimitChannel;
+        private EventData<byte, object> dynamicPressureChannel;
 
         public void Start()
         {
@@ -155,6 +164,9 @@ namespace KerbalSimpit.Providers
             airspeedChannel = GameEvents.FindEvent<EventData<byte, object>>("toSerial" + OutboundPackets.Airspeed);
             KSPit.AddToDeviceHandler(TempLimitProvider);
             tempLimitChannel = GameEvents.FindEvent<EventData<byte, object>>("toSerial" + OutboundPackets.TempLimit);
+            KSPit.AddToDeviceHandler(DynamicPressureProvider);
+            dynamicPressureChannel = GameEvents.FindEvent<EventData<byte, object>>(
+                "toSerial" + OutboundPackets.DynamicPressure);
         }
 
         public void OnDestroy()
@@ -171,6 +183,7 @@ namespace KerbalSimpit.Providers
             KSPit.RemoveToDeviceHandler(DeltaVEnvProvider);
             KSPit.RemoveToDeviceHandler(BurnTimeProvider);
             KSPit.RemoveToDeviceHandler(TempLimitProvider);
+            KSPit.RemoveToDeviceHandler(DynamicPressureProvider);
         }
 
         public void AltitudeProvider()
@@ -198,6 +211,25 @@ namespace KerbalSimpit.Providers
             myApsidesTime.apoapsis = (int)FlightGlobals.ActiveVessel.orbit.timeToAp;
             myApsidesTime.periapsis = (int)FlightGlobals.ActiveVessel.orbit.timeToPe;
             if (apsidesTimeChannel != null) apsidesTimeChannel.Fire(OutboundPackets.ApsidesTime, myApsidesTime);
+        }
+
+        public void DynamicPressureProvider()
+        {
+            Vessel vessel = FlightGlobals.ActiveVessel;
+            if (vessel == null || vessel.mainBody == null) return;
+
+            double pressure = vessel.mainBody.GetPressure(vessel.altitude);
+            double temperature = vessel.mainBody.GetTemperature(vessel.altitude);
+            double density = vessel.mainBody.GetDensity(pressure, temperature);
+            double speed = vessel.srf_velocity.magnitude;
+            double dynamicPressureKPa = 0.5 * density * speed * speed / 1000.0;
+            if (Double.IsNaN(dynamicPressureKPa) || Double.IsInfinity(dynamicPressureKPa)) return;
+
+            myDynamicPressure.kiloPascals = (float)Math.Max(0.0, dynamicPressureKPa);
+            if (dynamicPressureChannel != null)
+            {
+                dynamicPressureChannel.Fire(OutboundPackets.DynamicPressure, myDynamicPressure);
+            }
         }
 
         public void VelocityProvider()

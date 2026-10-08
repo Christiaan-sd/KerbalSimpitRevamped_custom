@@ -75,6 +75,7 @@ namespace KerbalSimpit
         public static byte ScienceValue = 61;
         public static byte ScienceThreshold = 62;
         public static byte ScienceBlinkInterval = 63;
+        public static byte DynamicPressure = 64;
 
         // External Environment
         public static byte TargetInfo = 25;
