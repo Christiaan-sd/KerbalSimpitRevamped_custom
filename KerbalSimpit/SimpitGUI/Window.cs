@@ -26,6 +26,11 @@ namespace KerbalSimpit.SimpitGUI
 		private static bool gui_enabled;
 		private static bool hide_ui;
 		private KSPit simpitInstance;
+		private string scienceThresholdText;
+		private string blinkIntervalText;
+		private string collectDelayText;
+		private string statusIntervalText;
+		private string refreshRateText;
 
 		static Window instance;
 
@@ -92,6 +97,11 @@ namespace KerbalSimpit.SimpitGUI
 		{
 			UpdateGUIState();
 			simpitInstance = (KSPit) FindObjectOfType(typeof(KSPit));
+			scienceThresholdText = KSPit.Config.ScienceThreshold.ToString("0.##");
+			blinkIntervalText = KSPit.Config.ScienceBlinkIntervalMs.ToString();
+			collectDelayText = KSPit.Config.ScienceCollectDelay.ToString("0.##");
+			statusIntervalText = KSPit.Config.StatusUpdateIntervalMs.ToString();
+			refreshRateText = KSPit.Config.RefreshRate.ToString();
 			if(simpitInstance == null)
             {
 				Debug.Log("Simpit : the GUI could not locate the KSPit instance. GUI will not work");
@@ -153,6 +163,45 @@ namespace KerbalSimpit.SimpitGUI
 					}
 				}
 				GUILayout.EndHorizontal();
+			}
+
+			GUILayout.Space(8);
+			GUILayout.Label("Controller settings");
+			GUILayout.Label("Science threshold");
+			scienceThresholdText = GUILayout.TextField(scienceThresholdText);
+			GUILayout.Label("Blink interval (ms)");
+			blinkIntervalText = GUILayout.TextField(blinkIntervalText);
+			GUILayout.Label("Collect delay (s)");
+			collectDelayText = GUILayout.TextField(collectDelayText);
+			GUILayout.Label("Status update interval (ms)");
+			statusIntervalText = GUILayout.TextField(statusIntervalText);
+			GUILayout.Label("Plugin refresh rate (ms)");
+			refreshRateText = GUILayout.TextField(refreshRateText);
+			KSPit.Config.Verbose = GUILayout.Toggle(KSPit.Config.Verbose, "Verbose logging");
+			KSPit.Config.ScienceAutoCollect = GUILayout.Toggle(
+				KSPit.Config.ScienceAutoCollect, "Auto-collect science");
+			KSPit.Config.SolarControlsAntennas = GUILayout.Toggle(
+				KSPit.Config.SolarControlsAntennas, "Solar controls antennas");
+			if (GUILayout.Button("Save settings"))
+			{
+				float threshold;
+				float delay;
+				int blink;
+				int status;
+				int refresh;
+				if (float.TryParse(scienceThresholdText, out threshold) &&
+					float.TryParse(collectDelayText, out delay) &&
+					int.TryParse(blinkIntervalText, out blink) &&
+					int.TryParse(statusIntervalText, out status) &&
+					int.TryParse(refreshRateText, out refresh))
+				{
+					KSPit.Config.ScienceThreshold = Mathf.Clamp(threshold, 0f, 1000f);
+					KSPit.Config.ScienceBlinkIntervalMs = Mathf.Clamp(blink, 50, 10000);
+					KSPit.Config.ScienceCollectDelay = Mathf.Clamp(delay, 0f, 60f);
+					KSPit.Config.StatusUpdateIntervalMs = Mathf.Clamp(status, 50, 5000);
+					KSPit.Config.RefreshRate = Mathf.Clamp(refresh, 25, 1000);
+					KSPit.Config.Save();
+				}
 			}
 
 			GUILayout.EndVertical();

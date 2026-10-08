@@ -19,6 +19,8 @@ namespace KerbalSimpit.Providers
         private EventData<byte, object> setSingleActionChannel;
         private EventData<byte, object> advancedStateChannel;
         private EventData<byte, object> scienceValueChannel;
+        private EventData<byte, object> scienceThresholdChannel;
+        private EventData<byte, object> scienceBlinkIntervalChannel;
         private float lastSentScienceValue = -1f;
         private float scienceValueSendTimer;
         private bool collectScheduled;
@@ -28,6 +30,8 @@ namespace KerbalSimpit.Providers
         private readonly ConcurrentQueue<byte> pendingActions = new ConcurrentQueue<byte>();
         private uint currentState;
         private bool resendState;
+        private float stateSendTimer;
+        private float settingsSendTimer;
 
         public void Start()
         {
@@ -49,6 +53,10 @@ namespace KerbalSimpit.Providers
 
             scienceValueChannel = GameEvents.FindEvent<EventData<byte, object>>(
                 "toSerial" + OutboundPackets.ScienceValue);
+            scienceThresholdChannel = GameEvents.FindEvent<EventData<byte, object>>(
+                "toSerial" + OutboundPackets.ScienceThreshold);
+            scienceBlinkIntervalChannel = GameEvents.FindEvent<EventData<byte, object>>(
+                "toSerial" + OutboundPackets.ScienceBlinkInterval);
         }
 
         private static void ApplyToRadiators(byte setting)
@@ -123,7 +131,7 @@ namespace KerbalSimpit.Providers
             if (collectScheduled)
             {
                 collectTimer += Time.deltaTime;
-                if (collectTimer >= 5f)
+                if (collectTimer >= Mathf.Max(0f, KSPit.Config.ScienceCollectDelay))
                 {
                     CollectAllScienceOnce();
                     collectScheduled = false;
@@ -132,14 +140,15 @@ namespace KerbalSimpit.Providers
             }
 
             uint newState = GetState();
-            if (newState != currentState || resendState)
+            stateSendTimer += Time.deltaTime;
+            if (advancedStateChannel != null &&
+                (newState != currentState || resendState ||
+                 stateSendTimer >= Mathf.Max(0.05f, KSPit.Config.StatusUpdateIntervalMs / 1000f)))
             {
                 resendState = false;
-                if (advancedStateChannel != null)
-                {
-                    advancedStateChannel.Fire(OutboundPackets.AdvancedActionGroups, newState);
-                    currentState = newState;
-                }
+                advancedStateChannel.Fire(OutboundPackets.AdvancedActionGroups, newState);
+                currentState = newState;
+                stateSendTimer = 0f;
             }
 
             float scienceValue = GetScienceValue();
@@ -152,6 +161,29 @@ namespace KerbalSimpit.Providers
                 scienceValueChannel.Fire(OutboundPackets.ScienceValue, message);
                 lastSentScienceValue = scienceValue;
                 scienceValueSendTimer = 0f;
+            }
+
+            settingsSendTimer += Time.deltaTime;
+            if (settingsSendTimer >= 1f)
+            {
+                SendScienceSettings();
+                settingsSendTimer = 0f;
+            }
+        }
+
+        private void SendScienceSettings()
+        {
+            if (scienceThresholdChannel != null)
+            {
+                scienceThresholdChannel.Fire(
+                    OutboundPackets.ScienceThreshold,
+                    new ScienceValueMessage { value = Mathf.Max(0f, KSPit.Config.ScienceThreshold) });
+            }
+            if (scienceBlinkIntervalChannel != null)
+            {
+                scienceBlinkIntervalChannel.Fire(
+                    OutboundPackets.ScienceBlinkInterval,
+                    new ScienceValueMessage { value = Mathf.Max(50f, KSPit.Config.ScienceBlinkIntervalMs) });
             }
         }
 
@@ -198,7 +230,10 @@ namespace KerbalSimpit.Providers
         private void ApplyToSolarAndAntennas(byte setting)
         {
             ApplyToModules<ModuleDeployableSolarPanel>(setting);
-            ApplyToModules<ModuleDeployableAntenna>(setting);
+            if (KSPit.Config.SolarControlsAntennas)
+            {
+                ApplyToModules<ModuleDeployableAntenna>(setting);
+            }
         }
 
         private void ApplyToModules<T>(byte setting) where T : PartModule
@@ -244,7 +279,7 @@ namespace KerbalSimpit.Providers
             }
             acknowledgedScienceValue = GetRawScienceValue(vessel);
             acknowledgedScienceContext = GetScienceContext(vessel);
-            collectScheduled = true;
+            collectScheduled = KSPit.Config.ScienceAutoCollect;
             collectTimer = 0f;
         }
 

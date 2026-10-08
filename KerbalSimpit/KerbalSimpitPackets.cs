@@ -73,6 +73,8 @@ namespace KerbalSimpit
         public static byte AdvancedActionGroups = 56;
         public static byte AdvancedCustomActionGroups = 57;
         public static byte ScienceValue = 61;
+        public static byte ScienceThreshold = 62;
+        public static byte ScienceBlinkInterval = 63;
 
         // External Environment
         public static byte TargetInfo = 25;

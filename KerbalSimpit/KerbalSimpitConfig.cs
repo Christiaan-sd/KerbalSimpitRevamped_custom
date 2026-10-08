@@ -55,6 +55,24 @@ namespace KerbalSimpit.Config
         [Persistent]
         public int RefreshRate = 125;
 
+        [Persistent]
+        public float ScienceThreshold = 10f;
+
+        [Persistent]
+        public int ScienceBlinkIntervalMs = 400;
+
+        [Persistent]
+        public float ScienceCollectDelay = 5f;
+
+        [Persistent]
+        public bool ScienceAutoCollect = true;
+
+        [Persistent]
+        public bool SolarControlsAntennas = true;
+
+        [Persistent]
+        public int StatusUpdateIntervalMs = 250;
+
         // public members that aren't persisted in the config file:
         public int EventQueueSize = 32;
 

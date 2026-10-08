@@ -51,6 +51,12 @@ again, so the controller only reports science that is still available at the
 current situation and biome. The value is a 32-bit float and the controller
 blinks only when more than 10 science points are available.
 
+The Kerbal Simpit in-game window also exposes persistent controller settings:
+the science threshold, LED blink interval, science collection delay, automatic
+collection, solar-to-antenna coupling, status update interval, refresh rate
+and verbose logging. Threshold and blink settings are sent to the controller
+over channels `62` and `63`.
+
 After science is executed, newly generated `ScienceData` is automatically moved
 through one KSP 1 `CollectAllEvent` call five seconds after the controller
 button is pressed. The provider compares the review/potential value before and
